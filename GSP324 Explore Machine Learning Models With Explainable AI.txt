@@ -9,16 +9,18 @@ model.add(layers.Dense(1, activation='sigmoid'))
 model.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
 model.fit(train_data, train_labels, epochs=10, batch_size=2048, validation_split=0.1)
 
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Train your second model
 
-Train your second model on the limited dataset. Use limited_train_data for your data and limited_train_labels for your labels. Use the same input_size for the limited_model
+#Train your second model on the limited dataset. Use `limited_train_data` for your data and `limited_train_labels` for your labels.
+# Use the same input_size for the limited_model
 
-create the limited_model = Sequential()
-limited_model.add (your layers)
-limited_model.compile
-limited_model.fit
+# ---- TODO ---------
+# create the limited_model = Sequential()
+# limited_model.add (your layers)
+# limited_model.compile
+# limited_model.fit
 
 limited_model = Sequential()
 limited_model.add(layers.Dense(200, input_shape=(input_size,), activation='relu'))
@@ -28,9 +30,40 @@ limited_model.add(layers.Dense(1, activation='sigmoid'))
 limited_model.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
 limited_model.fit(limited_train_data, limited_train_labels, epochs=10, batch_size=2048, validation_split=0.1)
 
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Add WithConfigBuilder code
+
+#@title Show model results in WIT
+num_datapoints = 1000  #@param {type: "number"}
+
+# Column indices to strip out from data from WIT before passing it to the model.
+columns_not_for_model_input = [
+    test_data_with_labels.columns.get_loc('loan_granted'),
+]
+
+# Return model predictions.
+def custom_predict(examples_to_infer):
+  # Delete columns not used by model
+  model_inputs = np.delete(
+      np.array(examples_to_infer), columns_not_for_model_input, axis=1).tolist()
+  # Get the class predictions from the model.
+  preds = model.predict(model_inputs)
+  preds = [[1 - pred[0], pred[0]] for pred in preds]
+  return preds
+  
+# Return 'limited' model predictions.
+def limited_custom_predict(examples_to_infer):
+  # Delete columns not used by model
+  model_inputs = np.delete(
+      np.array(examples_to_infer), columns_not_for_model_input, axis=1).tolist()
+  # Get the class predictions from the model.
+  preds = limited_model.predict(model_inputs)
+  preds = [[1 - pred[0], pred[0]] for pred in preds]
+  return preds
+
+examples_for_wit = test_data_with_labels.values.tolist()
+column_names = test_data_with_labels.columns.tolist()
 
 config_builder = (WitConfigBuilder(
     examples_for_wit[:num_datapoints],feature_names=column_names)
